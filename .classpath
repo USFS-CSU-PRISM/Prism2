@@ -15,7 +15,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="C:/prism documents/Setup/sqlite-jdbc-3.27.2.1.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-15">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-21">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
