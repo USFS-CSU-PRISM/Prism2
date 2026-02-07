@@ -242,7 +242,7 @@ public class ScrollPane_DynamicIdentifiers extends JScrollPane {
 							columnInfo_TArea.append("PRISM found " + unique_values_list.size() + 
 									" unique values for this identifier (across " + yield_tables_values.length + " prescriptions in your database)."  + "\n");
 							
-							if (unique_values_list.size() <= 100) {
+							if (unique_values_list.size() <= 300) {
 								columnInfo_TArea.append("'DISCRETE IDENTIFIER' is recommended.");
 							} else {
 								columnInfo_TArea.append("'DISCRETE IDENTIFIER' is disable when exceeding 100 unique values. 'RANGE IDENTIFIER' is recommended.");
@@ -257,7 +257,7 @@ public class ScrollPane_DynamicIdentifiers extends JScrollPane {
 							//2 radioButtons for DISCRETE or RANGE definition
 							JRadioButton radioDISCRETE = new JRadioButton("DISCRETE IDENTIFIER"); 
 							JRadioButton radioRANGE = new JRadioButton("RANGE IDENTIFIER"); 
-							if (unique_values_list.size() > 100) radioDISCRETE.setEnabled(false);
+							if (unique_values_list.size() > 300) radioDISCRETE.setEnabled(false);
 							
 							//Add 2 radio to the group
 							ButtonGroup definitionGroup = new ButtonGroup();
