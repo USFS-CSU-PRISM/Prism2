@@ -225,15 +225,6 @@ public class ScrollPane_DynamicIdentifiers extends JScrollPane {
 							    }
 							});												
 							//---------------------------------------------------------------------------------------------------	
-							
-							JPanel listPanel = new JPanel();
-							listPanel.setLayout(new GridBagLayout());
-							GridBagConstraints c_list = new GridBagConstraints();
-							c_list.fill = GridBagConstraints.HORIZONTAL;
-							c_list.weightx = 1;
-							c_list.weighty = 1;
-							
-							
 							List<String> unique_values_list = read_Database.get_col_unique_values_list(currentCheckBoxIndex);									
 							JList<String> jList = new JList<>(new Vector<>(unique_values_list));	// Convert unique values to a Vector
 							JScrollPane uniqueValueList_ScrollPanel = new JScrollPane(jList);		// ScrollPane contains the vector
