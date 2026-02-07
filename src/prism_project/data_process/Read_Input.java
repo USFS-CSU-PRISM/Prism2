@@ -215,8 +215,8 @@ public class Read_Input {
 			String[] a = list.toArray(new String[list.size()]);
 
 			nonea_total_rows = a.length;
-			nonea_total_columns = a[0].split(delimited).length;		// a[0].split(delimited) = String[] of the first row (this is the row below the column headers row which was removed already)	
-			nonea_data = new String[nonea_total_rows][nonea_total_columns];
+			nonea_total_columns = (nonea_total_rows > 0) ? a[0].split(delimited).length : 0;		// a[0].split(delimited) = String[] of the first row (this is the row below the column headers row which was removed already)	
+			nonea_data = (nonea_total_rows > 0) ? new String[nonea_total_rows][nonea_total_columns] : null;
 		
 			// read all values from all rows and columns
 			for (int i = 0; i < nonea_total_rows; i++) {		
@@ -424,8 +424,8 @@ public class Read_Input {
 			String[] a = list.toArray(new String[list.size()]);
 								
 			ea_total_rows = a.length;
-			ea_total_columns = a[0].split(delimited).length;		// a[0].split(delimited) = String[] of the first row (this is the row below the column headers row which was removed already)	
-			ea_data = new String[ea_total_rows][ea_total_columns];
+			ea_total_columns = (ea_total_rows > 0) ? a[0].split(delimited).length : 0;		// a[0].split(delimited) = String[] of the first row (this is the row below the column headers row which was removed already)	
+			ea_data = (ea_total_rows > 0) ?  new String[ea_total_rows][ea_total_columns] : null;
 		
 			// read all values from all rows and columns
 			for (int i = 0; i < ea_total_rows; i++) {		
@@ -643,8 +643,8 @@ public class Read_Input {
 			String[] a = list.toArray(new String[list.size()]);
 								
 			non_sr_total_rows = a.length;
-			non_sr_total_columns = a[0].split(delimited).length;		// a[0].split(delimited) = String[] of the first row (this is the row below the column headers row which was removed already)	
-			non_sr_data = new String[non_sr_total_rows][non_sr_total_columns];
+			non_sr_total_columns = (non_sr_total_rows > 0) ? a[0].split(delimited).length : 0;		// a[0].split(delimited) = String[] of the first checked row (this is the row below the column headers row which was removed already)	
+			non_sr_data = (non_sr_total_rows > 0) ? new String[non_sr_total_rows][non_sr_total_columns] : null;
 		
 			// read all values from all rows and columns
 			for (int i = 0; i < non_sr_total_rows; i++) {		
