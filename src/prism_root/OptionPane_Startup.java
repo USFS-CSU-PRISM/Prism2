@@ -76,9 +76,9 @@ public class OptionPane_Startup extends JOptionPane {
 				
 		
 		File latest_memory_file = getMostRecentMemoryFile(FilesHandle.get_temporaryFolder());	// Store the last time MAx Memory is saved by users: just an integer number
-		File memory_file = new File(latest_memory_file.getParent(), "prism_memory.txt");
+		File memory_file = new File(FilesHandle.get_temporaryFolder(), "prism_memory.txt");
 		try {
-			Files.copy(latest_memory_file.toPath(), memory_file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			if (latest_memory_file != null) Files.copy(latest_memory_file.toPath(), memory_file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
