@@ -30,13 +30,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -232,18 +235,8 @@ public class ScrollPane_DynamicIdentifiers extends JScrollPane {
 							
 							
 							List<String> unique_values_list = read_Database.get_col_unique_values_list(currentCheckBoxIndex);									
-							
-							//Add Labels of unique values to listPanel
-							for (int j = 0; j < unique_values_list.size(); j++) {
-								c_list.gridx = 0;
-								c_list.gridy = j;
-								c_list.weightx = 1;
-								c_list.weighty = 1;
-								listPanel.add(new JLabel(unique_values_list.get(j)), c_list);		
-							}
-							
-							//ScrollPane contains the listPanel
-							JScrollPane uniqueValueList_ScrollPanel = new JScrollPane(listPanel);
+							JList<String> jList = new JList<>(new Vector<>(unique_values_list));	// Convert unique values to a Vector
+							JScrollPane uniqueValueList_ScrollPanel = new JScrollPane(jList);		// ScrollPane contains the vector
 							TitledBorder border_List = new TitledBorder("List of unique values");
 							border_List.setTitleJustification(TitledBorder.CENTER);
 							uniqueValueList_ScrollPanel.setBorder(border_List);
@@ -258,10 +251,10 @@ public class ScrollPane_DynamicIdentifiers extends JScrollPane {
 							columnInfo_TArea.append("PRISM found " + unique_values_list.size() + 
 									" unique values for this identifier (across " + yield_tables_values.length + " prescriptions in your database)."  + "\n");
 							
-							if (unique_values_list.size() <= 50) {
+							if (unique_values_list.size() <= 100) {
 								columnInfo_TArea.append("'DISCRETE IDENTIFIER' is recommended.");
 							} else {
-								columnInfo_TArea.append("'RANGE IDENTIFIER' is recommended.");
+								columnInfo_TArea.append("'DISCRETE IDENTIFIER' is disable when exceeding 100 unique values. 'RANGE IDENTIFIER' is recommended.");
 							}
 							//---------------------------------------------------------------------------------------------------
 
@@ -273,6 +266,7 @@ public class ScrollPane_DynamicIdentifiers extends JScrollPane {
 							//2 radioButtons for DISCRETE or RANGE definition
 							JRadioButton radioDISCRETE = new JRadioButton("DISCRETE IDENTIFIER"); 
 							JRadioButton radioRANGE = new JRadioButton("RANGE IDENTIFIER"); 
+							if (unique_values_list.size() > 100) radioDISCRETE.setEnabled(false);
 							
 							//Add 2 radio to the group
 							ButtonGroup definitionGroup = new ButtonGroup();
