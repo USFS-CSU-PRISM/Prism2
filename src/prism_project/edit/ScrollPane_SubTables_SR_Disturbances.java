@@ -1,36 +1,34 @@
 /*******************************************************************************
  * Copyright (C) 2016-2018 PRISM Development Team
- * 
- * PRISM is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * PRISM is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with PRISM.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package prism_project.edit;
 
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
 
 import javax.swing.JPanel;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableModel;
 
 public class ScrollPane_SubTables_SR_Disturbances extends JScrollPane {		
 	private JTable table6a, table6b, table6c, table6d;
 	private Object[][] data6a, data6b, data6c, data6d;
 	private int total_replacing_disturbances;
 	private JScrollPane loss_rate_mean_scrollpane, loss_rate_std_scrollpane, conversion_rate_mean_scrollpane, conversion_rate_std_scrollpane;
+	// New components for the filtered view
+	private JTable editorTable;
+	private List<Integer> mappingIndices = new ArrayList<>();
 		
 	public ScrollPane_SubTables_SR_Disturbances(JTable table6a, Object[][] data6a, JTable table6b, Object[][] data6b, JTable table6c, Object[][] data6c, JTable table6d, Object[][] data6d, int total_replacing_disturbances) {	
 		this.table6a = table6a;
@@ -43,206 +41,212 @@ public class ScrollPane_SubTables_SR_Disturbances extends JScrollPane {
 		this.data6d = data6d;
 		this.total_replacing_disturbances = total_replacing_disturbances;
 		
+		// Setup editor table
+		editorTable = new JTable();
+		editorTable.setFillsViewportHeight(true);
+		// Force save when clicking outside the table or hitting enter
+		editorTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+		editorTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		editorTable.setCellSelectionEnabled(true);
+		editorTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 	
-		loss_rate_mean_scrollpane = new JScrollPane(/*this.table6a*/);
+		loss_rate_mean_scrollpane = new JScrollPane();
 		TitledBorder border = new TitledBorder("Loss rate mean (%)");
 		border.setTitleJustification(TitledBorder.CENTER);
 		loss_rate_mean_scrollpane.setBorder(border);
 		loss_rate_mean_scrollpane.setPreferredSize(new Dimension(0, 0));
 		
-		
-		loss_rate_std_scrollpane = new JScrollPane(/*this.table6b*/);
+		loss_rate_std_scrollpane = new JScrollPane();
 		border = new TitledBorder("Loss rate standard deviation");
 		border.setTitleJustification(TitledBorder.CENTER);
 		loss_rate_std_scrollpane.setBorder(border);
 		loss_rate_std_scrollpane.setPreferredSize(new Dimension(0, 0));
 		
-		
-		conversion_rate_mean_scrollpane = new JScrollPane(/*this.table6c*/);
+		conversion_rate_mean_scrollpane = new JScrollPane(editorTable);
 		border = new TitledBorder("Conversion rate mean (%)");
 		border.setTitleJustification(TitledBorder.CENTER);
 		conversion_rate_mean_scrollpane.setBorder(border);
 		conversion_rate_mean_scrollpane.setPreferredSize(new Dimension(0, 0));
 			
-		
-		conversion_rate_std_scrollpane = new JScrollPane(/*this.table6d*/);
+		conversion_rate_std_scrollpane = new JScrollPane();
 		border = new TitledBorder("Conversion rate standard deviation");
 		border.setTitleJustification(TitledBorder.CENTER);
 		conversion_rate_std_scrollpane.setBorder(border);
 		conversion_rate_std_scrollpane.setPreferredSize(new Dimension(0, 0));
 		
+		// Synchronize scroll and selection
+		loss_rate_mean_scrollpane.getVerticalScrollBar().setModel(loss_rate_std_scrollpane.getVerticalScrollBar().getModel());	
+		loss_rate_mean_scrollpane.getHorizontalScrollBar().setModel(loss_rate_std_scrollpane.getHorizontalScrollBar().getModel());	
+		table6b.setSelectionModel(table6a.getSelectionModel());	 
+		table6b.setColumnModel(table6a.getColumnModel());	 
 		
-		loss_rate_mean_scrollpane.getVerticalScrollBar().setModel(loss_rate_std_scrollpane.getVerticalScrollBar().getModel());	 //<--------------synchronize
-		loss_rate_mean_scrollpane.getHorizontalScrollBar().setModel(loss_rate_std_scrollpane.getHorizontalScrollBar().getModel());	 //<--------------synchronize
-		table6b.setSelectionModel(table6a.getSelectionModel());	 //<--------------synchronize
-		table6b.setColumnModel(table6a.getColumnModel());	 //<--------------synchronize
-		conversion_rate_mean_scrollpane.getVerticalScrollBar().setModel(conversion_rate_std_scrollpane.getVerticalScrollBar().getModel());	 //<--------------synchronize
-		conversion_rate_mean_scrollpane.getHorizontalScrollBar().setModel(conversion_rate_std_scrollpane.getHorizontalScrollBar().getModel());	 //<--------------synchronize
-		table6d.setSelectionModel(table6c.getSelectionModel());	 //<--------------synchronize
-		table6d.setColumnModel(table6c.getColumnModel());	 //<--------------synchronize
-		
+		// Listener: Click in table6a updates the filtered editorTable
+		table6a.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				if (!e.getValueIsAdjusting()) {
+					updateVisuals();
+				}
+			}
+		});
 		
 		JPanel combine_panel = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.BOTH;
-		c.gridx = 0;
-		c.gridy = 0;
-		c.weightx = 1;
-	    c.weighty = 1;
+		c.gridx = 0; c.gridy = 0; c.weightx = 1; c.weighty = 1;
 	    combine_panel.add(loss_rate_mean_scrollpane, c);
-		c.gridx = 1;
-		c.gridy = 0;
-		c.weightx = 1.4;
-	    c.weighty = 1;
-	    c.gridheight = 2;	//  delete this line to allow conversion rate std (activate line 110)
+		c.gridx = 1; c.gridy = 0; c.weightx = 1.4; c.weighty = 1; c.gridheight = 2;
 	    combine_panel.add(conversion_rate_mean_scrollpane, c);
-	    c.fill = GridBagConstraints.BOTH;
-		c.gridx = 0;
-		c.gridy = 1;
-		c.weightx = 1;
-	    c.weighty = 1;
-	    c.gridheight = 1;	//  delete this line to allow conversion rate std (activate line 110)
+		c.gridx = 0; c.gridy = 1; c.weightx = 1; c.weighty = 1; c.gridheight = 1;
 	    combine_panel.add(loss_rate_std_scrollpane, c);
-		c.gridx = 1;
-		c.gridy = 1;
-		c.weightx = 1;
-	    c.weighty = 1;
-//	    combine_panel.add(conversion_rate_std_scrollpane, c);
-	  
 		
 		setViewportView(combine_panel);
 		setBorder(null);
-	}	
-			
-	
+	}
+
+	private void updateVisuals() {
+		int row = table6a.getSelectedRow();
+		if (row != -1) {
+			String layer5 = table6a.getValueAt(row, 0).toString();
+			refreshEditor(layer5);
+		} else {
+			editorTable.setModel(new DefaultTableModel());
+		}
+	}
+
+	private void refreshEditor(String layer5) {
+		if (editorTable.isEditing()) editorTable.getCellEditor().stopCellEditing();
+		
+		mappingIndices.clear();
+		Vector<Vector<Object>> filteredRows = new Vector<>();
+		Vector<String> headers = new Vector<>();
+		for (int i = 0; i < table6c.getColumnCount(); i++) headers.add(table6c.getColumnName(i));
+
+		for (int i = 0; i < data6c.length; i++) {
+			if (data6c[i][0] != null && data6c[i][0].toString().equals(layer5)) {
+				mappingIndices.add(i);
+				Vector<Object> rowData = new Vector<>();
+				for (Object obj : data6c[i]) rowData.add(obj);
+				filteredRows.add(rowData);
+			}
+		}
+
+		DefaultTableModel model = new DefaultTableModel(filteredRows, headers) {
+			@Override
+			public boolean isCellEditable(int row, int col) {
+				return col >= 2; // Only conversion rate columns are editable
+			}
+		};
+
+		model.addTableModelListener(new TableModelListener() {
+			@Override
+			public void tableChanged(TableModelEvent e) {
+				if (e.getType() == TableModelEvent.UPDATE) {
+					int r = e.getFirstRow();
+					int col = e.getColumn();
+					if (r >= 0 && r < mappingIndices.size()) {
+						int masterRow = mappingIndices.get(r);
+						Object newValue = editorTable.getValueAt(r, col);
+						
+						try {
+							// 1. Update the master data array directly
+							data6c[masterRow][col] = Double.valueOf(newValue.toString());
+							
+							// 2. Trigger the selection listener in SR_Disturbances_GUI
+							// This makes the GUI call get_cr_mean_from_GUI() and save to Table6
+							if (table6c.getSelectionModel() != null) {
+								table6c.getSelectionModel().setSelectionInterval(masterRow, masterRow);
+							}
+						} catch (NumberFormatException ex) {
+							System.err.println("Invalid number format in editorTable");
+						}
+					}
+				}
+			}
+		});
+		editorTable.setModel(model);
+	}
+
 	public String get_lr_mean_from_GUI() {	
-		String lr_mean = "";
+		StringBuilder lr_mean = new StringBuilder();
 		for (int row = 0; row < data6a.length; row++) {
-			lr_mean = lr_mean + data6a[row][0] + " " + data6a[row][1];
+			lr_mean.append(data6a[row][0]).append(" ").append(data6a[row][1]);
 			for (int col = 2; col < data6a[row].length; col++) {
-				lr_mean = lr_mean + " " + data6a[row][col].toString();
+				lr_mean.append(" ").append(data6a[row][col]);
 			}
-			lr_mean = lr_mean + ";";
+			lr_mean.append(";");
 		}			
-		if (!lr_mean.equals("")) {
-			lr_mean = lr_mean.substring(0, lr_mean.length() - 1);		// remove the last ;
-		}
-		return lr_mean;
+		return lr_mean.length() > 0 ? lr_mean.substring(0, lr_mean.length() - 1) : "";
 	}
-	
-	
+
 	public String get_lr_std_from_GUI() {	
-		String lr_std = "";
+		StringBuilder lr_std = new StringBuilder();
 		for (int row = 0; row < data6b.length; row++) {
-			lr_std = lr_std + data6b[row][0] + " " + data6b[row][1];
+			lr_std.append(data6b[row][0]).append(" ").append(data6b[row][1]);
 			for (int col = 2; col < data6b[row].length; col++) {
-				lr_std = lr_std + " " + data6b[row][col].toString();
+				lr_std.append(" ").append(data6b[row][col]);
 			}
-			lr_std = lr_std + ";";
+			lr_std.append(";");
 		}			
-		if (!lr_std.equals("")) {
-			lr_std = lr_std.substring(0, lr_std.length() - 1);		// remove the last ;
-		}
-		return lr_std;
+		return lr_std.length() > 0 ? lr_std.substring(0, lr_std.length() - 1) : "";
 	}
-	
-	
+
 	public String get_cr_mean_from_GUI() {	
-		String cr_mean = "";
+		if (editorTable.isEditing()) editorTable.getCellEditor().stopCellEditing();
+		StringBuilder cr_mean = new StringBuilder();
 		for (int row = 0; row < data6c.length; row++) {
-			cr_mean = cr_mean + data6c[row][0] + " " + data6c[row][1];
+			cr_mean.append(data6c[row][0]).append(" ").append(data6c[row][1]);
 			for (int col = 2; col < data6c[row].length; col++) {
-				cr_mean = cr_mean + " " + data6c[row][col].toString();
+				Object val = data6c[row][col];
+				cr_mean.append(" ").append(val == null ? "0.0" : val.toString());
 			}
-			cr_mean = cr_mean + ";";
+			cr_mean.append(";");
 		}			
-		if (!cr_mean.equals("")) {
-			cr_mean = cr_mean.substring(0, cr_mean.length() - 1);		// remove the last ;
-		}
-		return cr_mean;
+		return cr_mean.length() > 0 ? cr_mean.substring(0, cr_mean.length() - 1) : "";
 	}
-	
-	
+
 	public String get_cr_std_from_GUI() {	
-		String cr_std = "";
+		StringBuilder cr_std = new StringBuilder();
 		for (int row = 0; row < data6d.length; row++) {
-			cr_std = cr_std + data6d[row][0] + " " + data6d[row][1];
+			cr_std.append(data6d[row][0]).append(" ").append(data6d[row][1]);
 			for (int col = 2; col < data6d[row].length; col++) {
-				cr_std = cr_std + " " + data6d[row][col].toString();
+				cr_std.append(" ").append(data6d[row][col]);
 			}
-			cr_std = cr_std + ";";
+			cr_std.append(";");
 		}			
-		if (!cr_std.equals("")) {
-			cr_std = cr_std.substring(0, cr_std.length() - 1);		// remove the last ;
-		}
-		return cr_std;
+		return cr_std.length() > 0 ? cr_std.substring(0, cr_std.length() - 1) : "";
 	}
-	
-	
+
 	public void reload_this_condition(String lr_mean, String lr_std, String cr_mean, String cr_std) {	
-		// Reload table6a
-		if(lr_mean.length() > 0) {		// this guarantees the string is not ""
-			String[] info_6a = lr_mean.split(";");					
-			for (int row = 0; row < info_6a.length; row++) {			
-				String[] sub_info = info_6a[row].split(" ");
-				for (int col = 2; col <  2 + total_replacing_disturbances; col++) {	// Just load up to the current number of SRs so old runs which have all 99 disturbances could be loaded)
-					double rate = Double.valueOf(sub_info[col]);
-					data6a[row][col] = rate;
-				}
-			}
-		}
+		parseStringToData(lr_mean, data6a);
+		parseStringToData(lr_std, data6b);
+		parseStringToData(cr_mean, data6c);
+		parseStringToData(cr_std, data6d);
 		
-		// Reload table6b
-		if(lr_std.length() > 0) {		// this guarantees the string is not ""
-			String[] info_6b = lr_std.split(";");					
-			for (int row = 0; row < info_6b.length; row++) {			
-				String[] sub_info = info_6b[row].split(" ");
-				for (int col = 2; col <  2 + total_replacing_disturbances; col++) {	// Just load up to the current number of SRs so old runs which have all 99 disturbances could be loaded)
-					double rate = Double.valueOf(sub_info[col]);
-					data6b[row][col] = rate;
-				}
-			}
-		}
-		
-		// Reload table6c
-		if(cr_mean.length() > 0) {		// this guarantees the string is not ""
-			String[] info_6c = cr_mean.split(";");					
-			for (int row = 0; row < info_6c.length; row++) {			
-				String[] sub_info = info_6c[row].split(" ");
-				for (int col = 2; col < 2 + total_replacing_disturbances; col++) {	// Just load up to the current number of SRs so old runs which have all 99 disturbances could be loaded)
-					double percentage = Double.valueOf(sub_info[col]);
-					data6c[row][col] = percentage;
-				}
-			}
-		}
-		
-		// Reload table6d
-		if(cr_std.length() > 0) {		// this guarantees the string is not ""
-			String[] info_6d = cr_std.split(";");					
-			for (int row = 0; row < info_6d.length; row++) {			
-				String[] sub_info = info_6d[row].split(" ");
-				for (int col = 2; col < 2 + total_replacing_disturbances; col++) {	// Just load up to the current number of SRs so old runs which have all 99 disturbances could be loaded)
-					double percentage = Double.valueOf(sub_info[col]);
-					data6d[row][col] = percentage;
+		updateVisuals(); 
+	}
+
+	private void parseStringToData(String input, Object[][] target) {
+		if(input != null && input.length() > 0) {
+			String[] info = input.split(";");					
+			for (int row = 0; row < info.length && row < target.length; row++) {			
+				String[] sub_info = info[row].split(" ");
+				for (int col = 2; col < 2 + total_replacing_disturbances && col < sub_info.length; col++) {
+					target[row][col] = Double.valueOf(sub_info[col]);
 				}
 			}
 		}
 	}
 
-
-	public JScrollPane get_loss_rate_mean_scrollpane() {
-		return loss_rate_mean_scrollpane;
-	}
-
-	public JScrollPane get_conversion_rate_mean_scrollpane() {
-		return conversion_rate_mean_scrollpane;
-	}
+	public JScrollPane get_loss_rate_mean_scrollpane() { return loss_rate_mean_scrollpane; }
+	public JScrollPane get_conversion_rate_mean_scrollpane() { return conversion_rate_mean_scrollpane; }
 	
 	public void show_4_tables() {			
 		loss_rate_mean_scrollpane.setViewportView(table6a);
 		loss_rate_std_scrollpane.setViewportView(table6b);
-		conversion_rate_mean_scrollpane.setViewportView(table6c);
+		conversion_rate_mean_scrollpane.setViewportView(editorTable);
 		conversion_rate_std_scrollpane.setViewportView(table6d);
+		updateVisuals();
 	}
 	
 	public void hide_4_tables() {			
@@ -257,5 +261,10 @@ public class ScrollPane_SubTables_SR_Disturbances extends JScrollPane {
 		this.data6b = data6b;
 		this.data6c = data6c;
 		this.data6d = data6d;
+		updateVisuals(); 
+	}
+
+	public JTable getEditorTable() {
+		return editorTable;
 	}
 }

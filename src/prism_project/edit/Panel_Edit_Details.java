@@ -7208,7 +7208,7 @@ public class Panel_Edit_Details extends JLayeredPane implements ActionListener {
 			
 			// scrollPane Quick Edit ----------------------------------------------------------------------	
 			// scrollPane Quick Edit ----------------------------------------------------------------------	
-			quick_edit = new Panel_QuickEdit_SR(table6a, data6a, table6b, data6b, table6c, data6c, table6d, data6d);
+			quick_edit = new Panel_QuickEdit_SR(table6a, data6a, table6b, data6b, table6c, data6c, table6d, data6d, sr_disturbances_tables_ScrollPane.getEditorTable());
 			quick_edit.disable_all_apply_buttons();
 			JScrollPane scrollpane_QuickEdit = new JScrollPane(quick_edit);			
 			border = new TitledBorder("Quick Edit ");

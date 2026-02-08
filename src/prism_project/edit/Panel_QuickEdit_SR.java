@@ -41,7 +41,7 @@ import prism_convenience.PrismGridBagLayoutHandle;
 import prism_convenience.PrismTableModel;
 
 public class Panel_QuickEdit_SR extends JPanel {
-	private JTable table6a, table6b, table6c;
+	private JTable table6a, table6b, table6c, editorTable;
 	private Object[][] data6a, data6b, data6c;
 	private DefaultTableCellRenderer render6a, render6b, render6c;
 	
@@ -53,7 +53,7 @@ public class Panel_QuickEdit_SR extends JPanel {
 	// Search field for category filtering
 	private JTextField searchField;
 	
-	public Panel_QuickEdit_SR(JTable table6a, Object[][] data6a, JTable table6b, Object[][] data6b, JTable table6c, Object[][] data6c, JTable table6d, Object[][] data6d) {
+	public Panel_QuickEdit_SR(JTable table6a, Object[][] data6a, JTable table6b, Object[][] data6b, JTable table6c, Object[][] data6c, JTable table6d, Object[][] data6d, JTable editorTable) {
 		this.table6a = table6a;
 		this.data6a = data6a;
 		this.render6a = (DefaultTableCellRenderer) table6a.getColumnModel().getColumn(0).getCellRenderer();
@@ -63,6 +63,7 @@ public class Panel_QuickEdit_SR extends JPanel {
 		this.table6c = table6c;
 		this.data6c = data6c;
 		this.render6c = (DefaultTableCellRenderer) table6c.getColumnModel().getColumn(0).getCellRenderer();
+		this.editorTable = editorTable;
 		
 		
 		setLayout(new GridBagLayout());
@@ -337,34 +338,34 @@ public class Panel_QuickEdit_SR extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
 				// Get selected rows
-				int[] selectedRow = table6c.getSelectedRows();
-				int[] selectedCol = table6c.getSelectedColumns();
+				int[] selectedRow = editorTable.getSelectedRows();
+				int[] selectedCol = editorTable.getSelectedColumns();
 				
 				if (selectedRow.length == 0) return;
 							
 				// Convert row index because "Sort" causes problems
 				for (int i = 0; i < selectedRow.length; i++) {
-					selectedRow[i] = table6c.convertRowIndexToModel(selectedRow[i]);
+					selectedRow[i] = editorTable.convertRowIndexToModel(selectedRow[i]);
 				}
 				// Convert col index because "Sort" causes problems
 				for (int j = 0; j < selectedCol.length; j++) {
-					selectedCol[j] = table6c.convertColumnIndexToModel(selectedCol[j]);
+					selectedCol[j] = editorTable.convertColumnIndexToModel(selectedCol[j]);
 				}
 				
 				for (int i : selectedRow) {
 					for (int j : selectedCol) {
 						if (!formatedTextfield_2.getText().equals(".") && j >= 2) {	// Only apply the changes to selected cells in columns >= 2 (all the percentage columns)
-							if (!formatedTextfield_2.getText().isEmpty()) data6c[i][j] = Double.valueOf(formatedTextfield_2.getText());	// Only apply the changes to selected cells in column 2 "weight", do not allow null
+							if (!formatedTextfield_2.getText().isEmpty()) editorTable.getModel().setValueAt(Double.valueOf(formatedTextfield_2.getText()), i, j);	// Only apply the changes to selected cells in column 2 "weight", do not allow null
 						}
 					}
 				}
 				
 				// just need to add 1 currently selected row (no need to add all because it would trigger a lot of "fireTableDataChanged" in "setValueAt" because of the ListSelectionListener of table6a)
 				// also need re-validate and repaint so all the new data would show up after the change is triggered by the "addRowSelectionInterval"
-				table6c.removeRowSelectionInterval(table6c.convertRowIndexToView(selectedRow[0]), table6c.convertRowIndexToView(selectedRow[0]));	// only trigger the data change once by remove then add 1 time
-				table6c.addRowSelectionInterval(table6c.convertRowIndexToView(selectedRow[0]), table6c.convertRowIndexToView(selectedRow[0]));
-				table6c.revalidate();
-				table6c.repaint();
+				editorTable.removeRowSelectionInterval(editorTable.convertRowIndexToView(selectedRow[0]), editorTable.convertRowIndexToView(selectedRow[0]));	// only trigger the data change once by remove then add 1 time
+				editorTable.addRowSelectionInterval(editorTable.convertRowIndexToView(selectedRow[0]), editorTable.convertRowIndexToView(selectedRow[0]));
+				editorTable.revalidate();
+				editorTable.repaint();
 				reset_view_without_changing_label();
 			}
 		});		
@@ -456,6 +457,7 @@ public class Panel_QuickEdit_SR extends JPanel {
 		if (table6a.isEditing()) table6a.getCellEditor().cancelCellEditing();
 		if (table6b.isEditing()) table6b.getCellEditor().cancelCellEditing();
 		if (table6c.isEditing()) table6c.getCellEditor().cancelCellEditing();
+		if (editorTable.isEditing()) editorTable.getCellEditor().cancelCellEditing();
 		
 		// Create Search Filter (Case Insensitive)
 		String searchText = searchField.getText().trim();
