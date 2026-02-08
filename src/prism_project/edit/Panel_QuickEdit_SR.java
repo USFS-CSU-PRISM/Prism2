@@ -1,17 +1,14 @@
 /*******************************************************************************
  * Copyright (C) 2016-2018 PRISM Development Team
- * 
- * PRISM is free software: you can redistribute it and/or modify
+ * * PRISM is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
- * PRISM is distributed in the hope that it will be useful,
+ * * PRISM is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ * * You should have received a copy of the GNU General Public License
  * along with PRISM.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package prism_project.edit;
@@ -30,6 +27,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -51,6 +49,9 @@ public class Panel_QuickEdit_SR extends JPanel {
 	private JLabel view_label;
 	private JButton btnApplyLrmean, btnApplyLrstd;
 	private JButton btnApplyPercentage;
+	
+	// Search field for category filtering
+	private JTextField searchField;
 	
 	public Panel_QuickEdit_SR(JTable table6a, Object[][] data6a, JTable table6b, Object[][] data6b, JTable table6c, Object[][] data6c, JTable table6d, Object[][] data6d) {
 		this.table6a = table6a;
@@ -136,6 +137,8 @@ public class Panel_QuickEdit_SR extends JPanel {
 				// Get selected rows
 				int[] selectedRow = table6a.getSelectedRows();
 				int[] selectedCol = table6a.getSelectedColumns();
+				
+				if (selectedRow.length == 0) return; // Guard against empty selection
 							
 				// Convert row index because "Sort" causes problems
 				for (int i = 0; i < selectedRow.length; i++) {
@@ -228,6 +231,8 @@ public class Panel_QuickEdit_SR extends JPanel {
 				// Get selected rows
 				int[] selectedRow = table6b.getSelectedRows();
 				int[] selectedCol = table6b.getSelectedColumns();
+				
+				if (selectedRow.length == 0) return;
 							
 				// Convert row index because "Sort" causes problems
 				for (int i = 0; i < selectedRow.length; i++) {
@@ -277,7 +282,7 @@ public class Panel_QuickEdit_SR extends JPanel {
 
 		// Add Label-------------------------------------------------------------------------------------------------
 		qd2.add(new JLabel("Cr mean (%)"), PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				1, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				0, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
 				0, 0, 0, 0));		// insets top, left, bottom, right
 
 		
@@ -316,7 +321,7 @@ public class Panel_QuickEdit_SR extends JPanel {
 			}
 		});
 		qd2.add(formatedTextfield_2, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				1, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				0, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
 				0, 0, 0, 0));		// insets top, left, bottom, right
 		
 				
@@ -334,6 +339,8 @@ public class Panel_QuickEdit_SR extends JPanel {
 				// Get selected rows
 				int[] selectedRow = table6c.getSelectedRows();
 				int[] selectedCol = table6c.getSelectedColumns();
+				
+				if (selectedRow.length == 0) return;
 							
 				// Convert row index because "Sort" causes problems
 				for (int i = 0; i < selectedRow.length; i++) {
@@ -362,7 +369,23 @@ public class Panel_QuickEdit_SR extends JPanel {
 			}
 		});		
 		qd2.add(btnApplyPercentage, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				1, 0, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				0, 0, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				0, 0, 0, 0));		// insets top, left, bottom, right
+		
+		
+		// Add Search Category Field----------------------------------------------------------------------------------
+		qd2.add(new JLabel("layer5 filter"), PrismGridBagLayoutHandle.get_c(c, "CENTER", 
+				1, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				0, 0, 0, 0));		// insets top, left, bottom, right
+		
+		searchField = new JTextField(8);
+		searchField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override public void insertUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
+			@Override public void removeUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
+			@Override public void changedUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
+		});
+		qd2.add(searchField, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
+				1, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
 				0, 0, 0, 0));		// insets top, left, bottom, right
 				
 		
@@ -434,12 +457,16 @@ public class Panel_QuickEdit_SR extends JPanel {
 		if (table6b.isEditing()) table6b.getCellEditor().cancelCellEditing();
 		if (table6c.isEditing()) table6c.getCellEditor().cancelCellEditing();
 		
-		
+		// Create Search Filter (Case Insensitive)
+		String searchText = searchField.getText().trim();
+		RowFilter<Object, Object> textFilter = RowFilter.regexFilter("(?i)" + searchText, 0);
+
 		switch (btn_compact.getToolTipText()) {
 		case "switch to full view":
 			// for table 6a and 6b: loss rate mean and std
-			List<RowFilter<Object, Object>> filters = new ArrayList<RowFilter<Object, Object>>();
-			RowFilter<Object, Object> compact_filter_a = new RowFilter<Object, Object>() {
+			List<RowFilter<Object, Object>> filtersA = new ArrayList<RowFilter<Object, Object>>();
+			filtersA.add(textFilter);
+			filtersA.add(new RowFilter<Object, Object>() {
 				public boolean include(Entry entry) {
 					for (int col = 2; col < data6a[0].length; col++) {	// except the first 2 columns
 						if ((double) entry.getValue(col) != 0) {
@@ -448,8 +475,11 @@ public class Panel_QuickEdit_SR extends JPanel {
 					}
 					return false;	// hide the row when all cells have the value of zero
 				}
-			};
-			RowFilter<Object, Object> compact_filter_b = new RowFilter<Object, Object>() {
+			});
+			
+			List<RowFilter<Object, Object>> filtersB = new ArrayList<RowFilter<Object, Object>>();
+			filtersB.add(textFilter);
+			filtersB.add(new RowFilter<Object, Object>() {
 				public boolean include(Entry entry) {
 					for (int col = 2; col < data6b[0].length; col++) {	// except the first 2 columns
 						if ((double) entry.getValue(col) != 0) {
@@ -458,22 +488,21 @@ public class Panel_QuickEdit_SR extends JPanel {
 					}
 					return false;	// hide the row when all cells have the value of zero
 				}
-			};
-			filters.add(compact_filter_a);
-			filters.add(compact_filter_b);
-			RowFilter<Object, Object> compact_filter_ab = RowFilter.orFilter(filters);
+			});
+
 			TableRowSorter<PrismTableModel> sorter_a = new TableRowSorter<PrismTableModel>((PrismTableModel) table6a.getModel());
-			sorter_a.setRowFilter(compact_filter_a);
+			sorter_a.setRowFilter(RowFilter.andFilter(filtersA));
 			table6a.setRowSorter(sorter_a);
+			
 			TableRowSorter<PrismTableModel> sorter_b = new TableRowSorter<PrismTableModel>((PrismTableModel) table6b.getModel());
-			sorter_b.setRowFilter(compact_filter_b);
+			sorter_b.setRowFilter(RowFilter.andFilter(filtersB));
 			table6b.setRowSorter(sorter_b);
 			
 			
-			
-			
 			// for table 6c: conversion rate mean
-			RowFilter<Object, Object> compact_filter = new RowFilter<Object, Object>() {
+			List<RowFilter<Object, Object>> filtersC = new ArrayList<RowFilter<Object, Object>>();
+			filtersC.add(textFilter);
+			filtersC.add(new RowFilter<Object, Object>() {
 				public boolean include(Entry entry) {
 					for (int col = 2; col < data6c[0].length; col++) {	// except the first 2 columns
 						if ((double) entry.getValue(col) != 0) {
@@ -482,9 +511,10 @@ public class Panel_QuickEdit_SR extends JPanel {
 					}
 					return false;	// hide the row when all cells have the value of zero
 				}
-			};
+			});
+			
 			TableRowSorter<PrismTableModel> sorter = new TableRowSorter<PrismTableModel>((PrismTableModel) table6c.getModel());
-			sorter.setRowFilter(compact_filter);
+			sorter.setRowFilter(RowFilter.andFilter(filtersC));
 			table6c.setRowSorter(sorter);
 			
 			// Set Color and Alignment for Cells
@@ -504,9 +534,19 @@ public class Panel_QuickEdit_SR extends JPanel {
 			}
 			break;
 		case "switch to compact view":
-			table6a.setRowSorter(null);
-			table6b.setRowSorter(null);
-			table6c.setRowSorter(null);
+			// Apply text filter even in full view
+			TableRowSorter<PrismTableModel> full_sorter_a = new TableRowSorter<>((PrismTableModel) table6a.getModel());
+			full_sorter_a.setRowFilter(textFilter);
+			table6a.setRowSorter(full_sorter_a);
+			
+			TableRowSorter<PrismTableModel> full_sorter_b = new TableRowSorter<>((PrismTableModel) table6b.getModel());
+			full_sorter_b.setRowFilter(textFilter);
+			table6b.setRowSorter(full_sorter_b);
+			
+			TableRowSorter<PrismTableModel> full_sorter_c = new TableRowSorter<>((PrismTableModel) table6c.getModel());
+			full_sorter_c.setRowFilter(textFilter);
+			table6c.setRowSorter(full_sorter_c);
+			
 			for (int i = 0; i < 2; i++) {	// first 2 columns only
 				table6c.getColumnModel().getColumn(i).setCellRenderer(render6c);
 			}

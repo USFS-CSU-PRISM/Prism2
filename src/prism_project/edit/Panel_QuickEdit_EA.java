@@ -1,17 +1,14 @@
 /*******************************************************************************
  * Copyright (C) 2016-2018 PRISM Development Team
- * 
- * PRISM is free software: you can redistribute it and/or modify
+ * * PRISM is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
- * PRISM is distributed in the hope that it will be useful,
+ * * PRISM is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ * * You should have received a copy of the GNU General Public License
  * along with PRISM.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package prism_project.edit;
@@ -21,6 +18,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -35,8 +33,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
@@ -58,6 +59,8 @@ public class Panel_QuickEdit_EA extends JPanel {
 	private JButton btn_apply_r_max;
 	private JButton btnApplyImplement;
 	
+	private JTextField searchField;
+	
 	public Panel_QuickEdit_EA(JTable table, Object[][] data, ArrayList<String>[] rotation_ranges, Object[][] default_data) {
 		this.table = table;
 		this.data = data;
@@ -66,6 +69,11 @@ public class Panel_QuickEdit_EA extends JPanel {
 		
 		setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
+		// Set weights to 1 to ensure equal spacing across columns
+		c.weightx = 1.0;
+		c.weighty = 0;
+		c.fill = GridBagConstraints.CENTER;
+		c.insets = new Insets(2, 2, 2, 2); 
 
 		
 		// Some set up for combobox---------------------------------------------------------------------------------------------
@@ -147,11 +155,8 @@ public class Panel_QuickEdit_EA extends JPanel {
 		// Add Label-------------------------------------------------------------------------------------------------
 		c.gridx = 0;
 		c.gridy = 2;
-		c.weightx = 0;
-		c.weighty = 0;
 		c.gridwidth = 1;
 		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER; 
 		add(new JLabel("reset"), c);
 		
 		// Add button default
@@ -168,13 +173,21 @@ public class Panel_QuickEdit_EA extends JPanel {
 					JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, IconHandle.get_scaledImageIcon(50, 50, "icon_question.png"), ExitOption, ExitOption[0]);
 			if (response == 0) {	
 				String previous_view = view_label.getText();
-				view_label.setText("     full view     ");
+				view_label.setText("      full view      ");
 				reset_view_without_changing_label();
 				//---------------------------------------the 3 lines above is needed to reset to full view 
 				for (int i = 0; i < default_data.length; i++) {
 					data[i] = Arrays.copyOf(default_data[i], default_data[i].length);
 				}
-				table.setRowSelectionInterval(table.convertRowIndexToView(0), table.convertRowIndexToView(data.length - 1));
+				
+				// Fix: only select rows that are currently visible in the view
+				table.clearSelection();
+				for (int i = 0; i < data.length; i++) {
+					int vIdx = table.convertRowIndexToView(i);
+					if (vIdx != -1) {
+						table.addRowSelectionInterval(vIdx, vIdx);
+					}
+				}
 				table.clearSelection();
 				//---------------------------------------the 2 lines below retrive the previous view. Those 5 lines are not good at all, keep it temporarily to avoid loading incorrectly table4a 
 				view_label.setText(previous_view);
@@ -185,11 +198,8 @@ public class Panel_QuickEdit_EA extends JPanel {
 		});
 		c.gridx = 0;
 		c.gridy = 0;
-		c.weightx = 0;
-		c.weighty = 0;
 		c.gridwidth = 1;
 		c.gridheight = 2;
-		c.fill = GridBagConstraints.CENTER;
 		add(btn_default, c);
 		
 		
@@ -198,11 +208,8 @@ public class Panel_QuickEdit_EA extends JPanel {
 		// Add Label-------------------------------------------------------------------------------------------------
 		c.gridx = 1;
 		c.gridy = 2;
-		c.weightx = 0;
-		c.weighty = 0;
 		c.gridwidth = 1;
 		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		view_label  = new JLabel("switch view");
 		add(view_label, c);
 		
@@ -231,35 +238,44 @@ public class Panel_QuickEdit_EA extends JPanel {
 		});
 		c.gridx = 1;
 		c.gridy = 0;
-		c.weightx = 0;
-		c.weighty = 0;
 		c.gridwidth = 1;
 		c.gridheight = 2;
-		c.fill = GridBagConstraints.CENTER;
 		add(btn_compact, c);
 				
-				
-		
+
 		// Add Label-------------------------------------------------------------------------------------------------
 		c.gridx = 2;
 		c.gridy = 2;
-		c.weightx = 0;
-		c.weighty = 0;
 		c.gridwidth = 1;
 		c.gridheight = 1;
+		add(new JLabel("layer5 filter"), c);
+
+		// Add Search Field
+		searchField = new JTextField(6);
+		searchField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override public void insertUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
+			@Override public void removeUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
+			@Override public void changedUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
+		});
+		c.gridx = 2;
+		c.gridy = 1;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		add(searchField, c);
 		c.fill = GridBagConstraints.CENTER;
+
+		
+		// Add Label-------------------------------------------------------------------------------------------------
+		c.gridx = 3;
+		c.gridy = 2;
+		c.gridwidth = 1;
+		c.gridheight = 1;
 		add(new JLabel("EA_E_min_ra"), c);
 
 		
 		// Add comboBox
 		JComboBox combo_e_min = new Combo_e_minage();
-		c.gridx = 2;
+		c.gridx = 3;
 		c.gridy = 1;
-		c.weightx = 1;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(combo_e_min, c);
 		
 		
@@ -285,8 +301,6 @@ public class Panel_QuickEdit_EA extends JPanel {
 					String covertype = (String) data[i][0];
 					int min_age_cut_existing = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[1].get(rotation_ranges[0].indexOf(covertype))) : -9999;
 				    int max_age_cut_existing = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[2].get(rotation_ranges[0].indexOf(covertype))) : -9999;
-				    int min_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[3].get(rotation_ranges[0].indexOf(covertype))) : -9999;
-				    int max_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[4].get(rotation_ranges[0].indexOf(covertype))) : -9999;
 				    
 				    if ((int) combo_e_min.getSelectedItem() > max_age_cut_existing) {
 				    	if ((int) data[i][2] != -9999) data[i][2] = max_age_cut_existing;
@@ -296,41 +310,29 @@ public class Panel_QuickEdit_EA extends JPanel {
 						if ((int) data[i][2] != -9999) data[i][2] = combo_e_min.getSelectedItem();
 					}
 				    
-					table.addRowSelectionInterval(table.convertRowIndexToView(i), table.convertRowIndexToView(i));
+					int viewIdx = table.convertRowIndexToView(i);
+					if (viewIdx != -1) {
+						table.addRowSelectionInterval(viewIdx, viewIdx);
+					}
 				}
 			}
 		});
-		c.gridx = 2;
+		c.gridx = 3;
 		c.gridy = 0;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(btn_apply_e_min, c);
 
 		
 	
 		// Add Label-------------------------------------------------------------------------------------------------
-		c.gridx = 3;
+		c.gridx = 4;
 		c.gridy = 2;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(new JLabel("EA_E_max_ra"), c);
 		
 		
 		// Add comboBox
 		JComboBox combo_e_max = new Combo_e_maxage();
-		c.gridx = 3;
+		c.gridx = 4;
 		c.gridy = 1;
-		c.weightx = 1;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(combo_e_max, c);
 		
 
@@ -356,8 +358,6 @@ public class Panel_QuickEdit_EA extends JPanel {
 					String covertype = (String) data[i][0];
 					int min_age_cut_existing = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[1].get(rotation_ranges[0].indexOf(covertype))) : -9999;
 				    int max_age_cut_existing = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[2].get(rotation_ranges[0].indexOf(covertype))) : -9999;
-				    int min_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[3].get(rotation_ranges[0].indexOf(covertype))) : -9999;
-				    int max_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[4].get(rotation_ranges[0].indexOf(covertype))) : -9999;
 				    
 				    if ((int) combo_e_max.getSelectedItem() > max_age_cut_existing) {
 				    	if ((int) data[i][3] != -9999) data[i][3] = max_age_cut_existing;
@@ -367,41 +367,29 @@ public class Panel_QuickEdit_EA extends JPanel {
 						if ((int) data[i][3] != -9999) data[i][3] = combo_e_max.getSelectedItem();
 					}
 				    
-					table.addRowSelectionInterval(table.convertRowIndexToView(i), table.convertRowIndexToView(i));
+					int viewIdx = table.convertRowIndexToView(i);
+					if (viewIdx != -1) {
+						table.addRowSelectionInterval(viewIdx, viewIdx);
+					}
 				}
 			}
 		});
-		c.gridx = 3;
+		c.gridx = 4;
 		c.gridy = 0;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(btn_apply_e_max, c);
 		
 	
 		
 		// Add Label-------------------------------------------------------------------------------------------------
-		c.gridx = 4;
+		c.gridx = 5;
 		c.gridy = 2;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(new JLabel("EA_R_min_ra"), c);
 
 		
 		// Add comboBox
 		JComboBox combo_r_min = new Combo_r_minage();
-		c.gridx = 4;
+		c.gridx = 5;
 		c.gridy = 1;
-		c.weightx = 1;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(combo_r_min, c);
 		
 		
@@ -425,9 +413,7 @@ public class Panel_QuickEdit_EA extends JPanel {
 				table.clearSelection(); // To help trigger the row refresh: clear then add back the rows
 				for (int i : selectedRow) {
 					String covertype = (String) data[i][0];
-					int min_age_cut_existing = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[1].get(rotation_ranges[0].indexOf(covertype))) : -9999;
-				    int max_age_cut_existing = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[2].get(rotation_ranges[0].indexOf(covertype))) : -9999;
-				    int min_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[3].get(rotation_ranges[0].indexOf(covertype))) : -9999;
+					int min_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[3].get(rotation_ranges[0].indexOf(covertype))) : -9999;
 				    int max_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[4].get(rotation_ranges[0].indexOf(covertype))) : -9999;
 				    
 				    if ((int) combo_r_min.getSelectedItem() > max_age_cut_regeneration) {
@@ -438,41 +424,29 @@ public class Panel_QuickEdit_EA extends JPanel {
 						if ((int) data[i][4] != -9999) data[i][4] = combo_r_min.getSelectedItem();
 					}
 				    
-					table.addRowSelectionInterval(table.convertRowIndexToView(i), table.convertRowIndexToView(i));
+					int viewIdx = table.convertRowIndexToView(i);
+					if (viewIdx != -1) {
+						table.addRowSelectionInterval(viewIdx, viewIdx);
+					}
 				}
 			}
 		});
-		c.gridx = 4;
+		c.gridx = 5;
 		c.gridy = 0;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(btn_apply_r_min, c);
 
 		
 	
 		// Add Label-------------------------------------------------------------------------------------------------
-		c.gridx = 5;
+		c.gridx = 6;
 		c.gridy = 2;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(new JLabel("EA_R_max_ra"), c);
 		
 		
 		// Add comboBox
 		JComboBox combo_r_max = new Combo_r_maxage();
-		c.gridx = 5;
+		c.gridx = 6;
 		c.gridy = 1;
-		c.weightx = 1;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(combo_r_max, c);
 		
 
@@ -496,9 +470,7 @@ public class Panel_QuickEdit_EA extends JPanel {
 				table.clearSelection(); // To help trigger the row refresh: clear then add back the rows
 				for (int i : selectedRow) {
 					String covertype = (String) data[i][0];
-					int min_age_cut_existing = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[1].get(rotation_ranges[0].indexOf(covertype))) : -9999;
-				    int max_age_cut_existing = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[2].get(rotation_ranges[0].indexOf(covertype))) : -9999;
-				    int min_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[3].get(rotation_ranges[0].indexOf(covertype))) : -9999;
+					int min_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[3].get(rotation_ranges[0].indexOf(covertype))) : -9999;
 				    int max_age_cut_regeneration = (rotation_ranges[0].indexOf(covertype) >= 0) ? Integer.valueOf(rotation_ranges[4].get(rotation_ranges[0].indexOf(covertype))) : -9999;
 				    
 				    if ((int) combo_r_max.getSelectedItem() > max_age_cut_regeneration) {
@@ -509,17 +481,15 @@ public class Panel_QuickEdit_EA extends JPanel {
 						if ((int) data[i][5] != -9999) data[i][5] = combo_r_max.getSelectedItem();
 					}
 				    
-					table.addRowSelectionInterval(table.convertRowIndexToView(i), table.convertRowIndexToView(i));
+					int viewIdx = table.convertRowIndexToView(i);
+					if (viewIdx != -1) {
+						table.addRowSelectionInterval(viewIdx, viewIdx);
+					}
 				}
 			}
 		});
-		c.gridx = 5;
+		c.gridx = 6;
 		c.gridy = 0;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(btn_apply_r_max, c);
 		
 		
@@ -528,26 +498,16 @@ public class Panel_QuickEdit_EA extends JPanel {
 		
 		
 		// Add Label-------------------------------------------------------------------------------------------------
-		c.gridx = 6;
+		c.gridx = 7;
 		c.gridy = 2;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(new JLabel("implementation"), c);
 
 	
 		// Add checkBox
 		JCheckBox implement_Check = new JCheckBox();
 		implement_Check.setSelected(true);
-		c.gridx = 6;
+		c.gridx = 7;
 		c.gridy = 1;
-		c.weightx = 1;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(implement_Check, c);
 
 		
@@ -575,18 +535,16 @@ public class Panel_QuickEdit_EA extends JPanel {
 					} else {
 						data[i][6] = false;
 					}	
-					table.addRowSelectionInterval(table.convertRowIndexToView(i), table.convertRowIndexToView(i));
+					int viewIdx = table.convertRowIndexToView(i);
+					if (viewIdx != -1) {
+						table.addRowSelectionInterval(viewIdx, viewIdx);
+					}
 				}
 				reset_view_without_changing_label();
 			}
 		});
-		c.gridx = 6;
+		c.gridx = 7;
 		c.gridy = 0;
-		c.weightx = 0;
-		c.weighty = 0;
-		c.gridwidth = 1;
-		c.gridheight = 1;
-		c.fill = GridBagConstraints.CENTER;
 		add(btnApplyImplement, c);
 	}
 	
@@ -617,18 +575,21 @@ public class Panel_QuickEdit_EA extends JPanel {
 			table.getCellEditor().cancelCellEditing();
 		}
 		
+		List<RowFilter<Object, Object>> filters = new ArrayList<>();
+		
+		// Search filter logic
+		String searchText = (searchField != null) ? searchField.getText() : "";
+		filters.add(RowFilter.regexFilter("(?i)" + searchText, 0));
+		
 		switch (btn_compact.getToolTipText()) {
 		case "switch to full view":
 			if (data != null) {
-				RowFilter<Object, Object> compact_filter = new RowFilter<Object, Object>() {
+				filters.add(new RowFilter<Object, Object>() {
 					public boolean include(Entry entry) {
 						Boolean implementation = (boolean) entry.getValue(6);
 						return implementation == true;
 					}
-				};
-				TableRowSorter<PrismTableModel> sorter = new TableRowSorter<PrismTableModel>((PrismTableModel) table.getModel());
-				sorter.setRowFilter(compact_filter);
-				table.setRowSorter(sorter);
+				});
 				
 				// Set Color and Alignment for Cells
 		        DefaultTableCellRenderer compact_r = new DefaultTableCellRenderer() {
@@ -648,11 +609,14 @@ public class Panel_QuickEdit_EA extends JPanel {
 			}
 			break;
 		case "switch to compact view":
-			table.setRowSorter(null);
 			for (int i = 0; i < 2; i++) {	// first 2 columns only
 				table.getColumnModel().getColumn(i).setCellRenderer(render);
 			}
 			break;
 		}
+		
+		TableRowSorter<PrismTableModel> sorter = new TableRowSorter<PrismTableModel>((PrismTableModel) table.getModel());
+		sorter.setRowFilter(RowFilter.andFilter(filters));
+		table.setRowSorter(sorter);
 	}
 }

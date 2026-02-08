@@ -1,17 +1,14 @@
 /*******************************************************************************
  * Copyright (C) 2016-2018 PRISM Development Team
- * 
- * PRISM is free software: you can redistribute it and/or modify
+ * * PRISM is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
- * PRISM is distributed in the hope that it will be useful,
+ * * PRISM is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ * * You should have received a copy of the GNU General Public License
  * along with PRISM.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package prism_project.edit;
@@ -39,6 +36,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -66,6 +64,9 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 	private JButton btnApplyActivityCost;
 	private JButton btnApplyConversionCost;
 	private Prism_ShowHideColumnsButtons btnApplyShowHide;
+	
+	// Search field for filtering by category
+	private JTextField searchField;
 	
 	public Panel_QuickEdit_ManagementCost(Read_Database read_database, JTable table7a, Object[][] data7a, String[] columnNames7a, JTable table7b, Object[][] data7b) {
 		this.table7b = table7b;
@@ -157,6 +158,8 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 				// Get selected rows
 				int[] selectedRow = table7a.getSelectedRows();
 				int[] selectedCol = table7a.getSelectedColumns();
+				
+				if (selectedRow.length == 0) return;
 							
 				// Convert row index because "Sort" causes problems
 				for (int i = 0; i < selectedRow.length; i++) {
@@ -255,6 +258,8 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 				// Get selected rows
 				int[] selectedRow = table7b.getSelectedRows();
 				int[] selectedCol = table7b.getSelectedColumns();
+				
+				if (selectedRow.length == 0) return;
 							
 				// Convert row index because "Sort" causes problems
 				for (int i = 0; i < selectedRow.length; i++) {
@@ -285,12 +290,28 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 		qd2.add(btnApplyConversionCost, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
 				1, 0, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
 				0, 0, 0, 0));		// insets top, left, bottom, right
+		
+		
+		// Add Search Category Field (POSITIONED IN THE MIDDLE)-------------------------------------------------------
+		qd2.add(new JLabel("layer5 filter"), PrismGridBagLayoutHandle.get_c(c, "CENTER", 
+				2, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				0, 0, 0, 0));		// insets top, left, bottom, right
+		
+		searchField = new JTextField(8);
+		searchField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override public void insertUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
+			@Override public void removeUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
+			@Override public void changedUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
+		});
+		qd2.add(searchField, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
+				2, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				0, 0, 0, 0));		// insets top, left, bottom, right
 				
 
 		// Add Label-------------------------------------------------------------------------------------------------
-		view_label  = new JLabel("switch view");
+		view_label = new JLabel("switch view");
 		qd2.add(view_label, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				2, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				3, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
 				0, 0, 0, 0));		// insets top, left, bottom, right
 		
 		// Add button compact view
@@ -317,7 +338,7 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 			reset_view_without_changing_label();
 		});
 		qd2.add(btn_compact, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				2, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				3, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
 				0, 0, 0, 0));		// insets top, left, bottom, right		
 		
 		
@@ -402,24 +423,7 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 						} else {
 							column_handle.setColumnVisible(i.getText(), false);	// hide column
 						}
-						
-//						if (total_checks_count() < 10) {
-//							table.setAutoResizeMode(1);		// table's auto resize is on
-//						} else {
-//							table.setAutoResizeMode(0);		// table's auto resize is off
-//						}
 					}
-				
-//					// Count the total check boxes that are checked
-//					public int total_checks_count() {
-//						int count = 0;
-//						for (JCheckBox i : column_checkboxes) {
-//							if (i.isSelected()) {
-//								count++;
-//							}
-//						}
-//						return count;
-//					}
 				});
 			}
 			
@@ -487,16 +491,10 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 			});
 			
 			
-			
-			
-			
 			// Add radioPanel & scrollPane to a panel				
 			JPanel combined_panel = new JPanel(new BorderLayout());
 			combined_panel.add(radio_panel, BorderLayout.NORTH);
 			combined_panel.add(scrollPane, BorderLayout.CENTER);
-			
-			
-	
 			
 			
 			// Listener for this button class------------------------------------------------------------------------------------------------------
@@ -543,9 +541,17 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 			table7b.getCellEditor().cancelCellEditing();
 		}
 		
+		// 1. Prepare Search Filter (Column 0 - Category)
+		String text = searchField.getText();
+		RowFilter<Object, Object> search_filter = RowFilter.regexFilter("(?i)" + text, 0);
+		
+		// 2. Prepare View Filters
+		List<RowFilter<Object, Object>> filters = new ArrayList<>();
+		filters.add(search_filter);
+		
 		switch (btn_compact.getToolTipText()) {
 		case "switch to full view":
-			RowFilter<Object, Object> compact_filter = new RowFilter<Object, Object>() {
+			filters.add(new RowFilter<Object, Object>() {
 				public boolean include(Entry entry) {
 					for (int col = 2; col < data7b[0].length; col++) {	// except the first 2 columns
 						if (entry.getValue(col) != null) {
@@ -554,10 +560,7 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 					}
 					return false;	// hide the row when all cells have the value of zero
 				}
-			};
-			TableRowSorter<PrismTableModel> sorter = new TableRowSorter<PrismTableModel>((PrismTableModel) table7b.getModel());
-			sorter.setRowFilter(compact_filter);
-			table7b.setRowSorter(sorter);
+			});
 			
 			// Set Color and Alignment for Cells
 	        DefaultTableCellRenderer compact_r = new DefaultTableCellRenderer() {
@@ -576,11 +579,15 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 			}
 			break;
 		case "switch to compact view":
-			table7b.setRowSorter(null);
 			for (int i = 0; i < 2; i++) {	// first 2 columns only
 				table7b.getColumnModel().getColumn(i).setCellRenderer(render7b);
 			}
 			break;
 		}
+		
+		// Apply combined filters
+		TableRowSorter<PrismTableModel> sorter = new TableRowSorter<>((PrismTableModel) table7b.getModel());
+		sorter.setRowFilter(RowFilter.andFilter(filters));
+		table7b.setRowSorter(sorter);
 	}
 }
