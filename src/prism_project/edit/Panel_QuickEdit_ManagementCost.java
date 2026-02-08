@@ -2,6 +2,7 @@
  * Copyright (C) 2016-2018 PRISM Development Team
  * * PRISM is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * * PRISM is distributed in the hope that it will be useful,
@@ -55,7 +56,7 @@ import prism_project.data_process.Read_Database;
 import prism_root.Prism2Main;
 
 public class Panel_QuickEdit_ManagementCost extends JPanel {
-	private JTable table7b;
+	private JTable table7b, editorTable;
 	private Object[][] data7b;
 	private DefaultTableCellRenderer render7b;
 	
@@ -65,13 +66,11 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 	private JButton btnApplyConversionCost;
 	private Prism_ShowHideColumnsButtons btnApplyShowHide;
 	
-	// Search field for filtering by category
-	private JTextField searchField;
-	
-	public Panel_QuickEdit_ManagementCost(Read_Database read_database, JTable table7a, Object[][] data7a, String[] columnNames7a, JTable table7b, Object[][] data7b) {
+	public Panel_QuickEdit_ManagementCost(Read_Database read_database, JTable table7a, Object[][] data7a, String[] columnNames7a, JTable table7b, Object[][] data7b, JTable editorTable) {
 		this.table7b = table7b;
 		this.data7b = data7b;
 		this.render7b = (DefaultTableCellRenderer) table7b.getColumnModel().getColumn(0).getCellRenderer();
+		this.editorTable = editorTable;
 		
 		
 		setLayout(new GridBagLayout());
@@ -256,35 +255,35 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
 				// Get selected rows
-				int[] selectedRow = table7b.getSelectedRows();
-				int[] selectedCol = table7b.getSelectedColumns();
+				int[] selectedRow = editorTable.getSelectedRows();
+				int[] selectedCol = editorTable.getSelectedColumns();
 				
 				if (selectedRow.length == 0) return;
 							
 				// Convert row index because "Sort" causes problems
 				for (int i = 0; i < selectedRow.length; i++) {
-					selectedRow[i] = table7b.convertRowIndexToModel(selectedRow[i]);
+					selectedRow[i] = editorTable.convertRowIndexToModel(selectedRow[i]);
 				}
 				// Convert col index because "Sort" causes problems
 				for (int j = 0; j < selectedCol.length; j++) {
-					selectedCol[j] = table7b.convertColumnIndexToModel(selectedCol[j]);
+					selectedCol[j] = editorTable.convertColumnIndexToModel(selectedCol[j]);
 				}
 				
 				for (int i : selectedRow) {
 					for (int j : selectedCol) {
-						if (!formatedTextfield_2.getText().equals(".") && j >= 2) {	// Only apply the changes to selected cells in columns > 2
-							data7b[i][j] = (formatedTextfield_2.getText().isEmpty())? null : Double.valueOf(formatedTextfield_2.getText());
+						if (!formatedTextfield_2.getText().equals(".") && j >= 2) {	// Only apply the changes to selected cells in columns >= 2 (all the percentage columns)
+							if (!formatedTextfield_2.getText().isEmpty()) editorTable.getModel().setValueAt(Double.valueOf(formatedTextfield_2.getText()), i, j);	// Only apply the changes to selected cells in column 2 "weight", do not allow null
 						}
 					}
 				}
 				
-				// just need to add 1 currently selected row (no need to add all because it would trigger a lot of "fireTableDataChanged" in "setValueAt" because of the ListSelectionListener of table7b)
+				// just need to add 1 currently selected row (no need to add all because it would trigger a lot of "fireTableDataChanged" in "setValueAt" because of the ListSelectionListener of table6a)
 				// also need re-validate and repaint so all the new data would show up after the change is triggered by the "addRowSelectionInterval"
-				table7b.removeRowSelectionInterval(table7b.convertRowIndexToView(selectedRow[0]), table7b.convertRowIndexToView(selectedRow[0]));	// only trigger the data change once by remove then add 1 time
-				table7b.addRowSelectionInterval(table7b.convertRowIndexToView(selectedRow[0]), table7b.convertRowIndexToView(selectedRow[0]));
-				table7b.revalidate();
-				table7b.repaint();
-				reset_view_without_changing_label();
+				editorTable.removeRowSelectionInterval(editorTable.convertRowIndexToView(selectedRow[0]), editorTable.convertRowIndexToView(selectedRow[0]));	// only trigger the data change once by remove then add 1 time
+				editorTable.addRowSelectionInterval(editorTable.convertRowIndexToView(selectedRow[0]), editorTable.convertRowIndexToView(selectedRow[0]));
+				editorTable.revalidate();
+				editorTable.repaint();
+				reset_view_without_changing_label();	// very important to fix the last cell of multiple selected cells is not registered the new value
 			}
 		});		
 		qd2.add(btnApplyConversionCost, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
@@ -292,21 +291,6 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 				0, 0, 0, 0));		// insets top, left, bottom, right
 		
 		
-		// Add Search Category Field (POSITIONED IN THE MIDDLE)-------------------------------------------------------
-		qd2.add(new JLabel("layer5 filter"), PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				2, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
-				0, 0, 0, 0));		// insets top, left, bottom, right
-		
-		searchField = new JTextField(8);
-		searchField.getDocument().addDocumentListener(new DocumentListener() {
-			@Override public void insertUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
-			@Override public void removeUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
-			@Override public void changedUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
-		});
-		qd2.add(searchField, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				2, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
-				0, 0, 0, 0));		// insets top, left, bottom, right
-				
 
 		// Add Label-------------------------------------------------------------------------------------------------
 		view_label = new JLabel("switch view");
@@ -541,13 +525,8 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 			table7b.getCellEditor().cancelCellEditing();
 		}
 		
-		// 1. Prepare Search Filter (Column 0 - Category)
-		String text = searchField.getText();
-		RowFilter<Object, Object> search_filter = RowFilter.regexFilter("(?i)" + text, 0);
-		
-		// 2. Prepare View Filters
+		// Prepare View Filters
 		List<RowFilter<Object, Object>> filters = new ArrayList<>();
-		filters.add(search_filter);
 		
 		switch (btn_compact.getToolTipText()) {
 		case "switch to full view":
@@ -587,7 +566,9 @@ public class Panel_QuickEdit_ManagementCost extends JPanel {
 		
 		// Apply combined filters
 		TableRowSorter<PrismTableModel> sorter = new TableRowSorter<>((PrismTableModel) table7b.getModel());
-		sorter.setRowFilter(RowFilter.andFilter(filters));
+		if (!filters.isEmpty()) {
+			sorter.setRowFilter(RowFilter.andFilter(filters));
+		}
 		table7b.setRowSorter(sorter);
 	}
 }
