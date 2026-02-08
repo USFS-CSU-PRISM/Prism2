@@ -74,7 +74,7 @@ public class ScrollPane_SubTables_ManagementCost extends JScrollPane {
 		editorTable.setFillsViewportHeight(true);
 		// Force save when clicking outside the table or hitting enter
 		editorTable.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
-		editorTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		// editorTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		editorTable.setCellSelectionEnabled(true);
 		editorTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -313,10 +313,13 @@ public class ScrollPane_SubTables_ManagementCost extends JScrollPane {
 		
 		// Create a container panel to hold Dropdown + Editor Table
 		JPanel container7b = new JPanel(new BorderLayout());
+		container7b.setPreferredSize(new Dimension(20, 20));
 		container7b.add(filterDropdown, BorderLayout.NORTH);
 		container7b.add(new JScrollPane(editorTable), BorderLayout.CENTER);
 		
 		conversion_base_adjust_scrollpane.setViewportView(container7b);
+		conversion_base_adjust_scrollpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+		conversion_base_adjust_scrollpane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		setupDropdown7b();
 	}
 	
