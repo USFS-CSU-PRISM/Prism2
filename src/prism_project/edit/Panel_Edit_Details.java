@@ -3362,7 +3362,7 @@ public class Panel_Edit_Details extends JLayeredPane implements ActionListener {
 					for (int j = 0; j < total_CoverType; j++) {
 						data7b[table_row][0] = all_layers.get(4).get(i);
 						data7b[table_row][1] = all_layers.get(4).get(j);
-						data7b[table_row][2] = (double) 240; 
+						// data7b[table_row][2] = (double) 240; 
 						table_row++;
 				}
 			}
