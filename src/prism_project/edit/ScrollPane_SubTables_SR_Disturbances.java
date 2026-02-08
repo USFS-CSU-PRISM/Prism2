@@ -63,7 +63,7 @@ public class ScrollPane_SubTables_SR_Disturbances extends JScrollPane {
 		loss_rate_std_scrollpane.setPreferredSize(new Dimension(0, 0));
 		
 		conversion_rate_mean_scrollpane = new JScrollPane(editorTable);
-		border = new TitledBorder("Conversion rate mean (%)");
+		border = new TitledBorder("Conversion rate mean (%): sum of a column must be 100 if Loss rate mean > 0");
 		border.setTitleJustification(TitledBorder.CENTER);
 		conversion_rate_mean_scrollpane.setBorder(border);
 		conversion_rate_mean_scrollpane.setPreferredSize(new Dimension(0, 0));
