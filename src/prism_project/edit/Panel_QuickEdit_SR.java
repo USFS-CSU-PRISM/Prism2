@@ -50,9 +50,6 @@ public class Panel_QuickEdit_SR extends JPanel {
 	private JButton btnApplyLrmean, btnApplyLrstd;
 	private JButton btnApplyPercentage;
 	
-	// Search field for category filtering
-	private JTextField searchField;
-	
 	public Panel_QuickEdit_SR(JTable table6a, Object[][] data6a, JTable table6b, Object[][] data6b, JTable table6c, Object[][] data6c, JTable table6d, Object[][] data6d, JTable editorTable) {
 		this.table6a = table6a;
 		this.data6a = data6a;
@@ -366,7 +363,7 @@ public class Panel_QuickEdit_SR extends JPanel {
 				editorTable.addRowSelectionInterval(editorTable.convertRowIndexToView(selectedRow[0]), editorTable.convertRowIndexToView(selectedRow[0]));
 				editorTable.revalidate();
 				editorTable.repaint();
-				reset_view_without_changing_label();
+				reset_view_without_changing_label();	// very important to fix the last cell of multiple selected cells is not registered the new value
 			}
 		});		
 		qd2.add(btnApplyPercentage, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
@@ -374,27 +371,10 @@ public class Panel_QuickEdit_SR extends JPanel {
 				0, 0, 0, 0));		// insets top, left, bottom, right
 		
 		
-		// Add Search Category Field----------------------------------------------------------------------------------
-		qd2.add(new JLabel("layer5 filter"), PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				1, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
-				0, 0, 0, 0));		// insets top, left, bottom, right
-		
-		searchField = new JTextField(8);
-		searchField.getDocument().addDocumentListener(new DocumentListener() {
-			@Override public void insertUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
-			@Override public void removeUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
-			@Override public void changedUpdate(DocumentEvent e) { reset_view_without_changing_label(); }
-		});
-		qd2.add(searchField, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				1, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
-				0, 0, 0, 0));		// insets top, left, bottom, right
-				
-		
-		
 		// Add Label-------------------------------------------------------------------------------------------------
 		view_label  = new JLabel("switch view");
 		qd2.add(view_label, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				2, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				1, 2, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
 				0, 0, 0, 0));		// insets top, left, bottom, right
 		
 		// Add button compact view
@@ -421,7 +401,7 @@ public class Panel_QuickEdit_SR extends JPanel {
 			reset_view_without_changing_label();
 		});
 		qd2.add(btn_compact, PrismGridBagLayoutHandle.get_c(c, "CENTER", 
-				2, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
+				1, 1, 1, 1, 0, 0, 	// gridx, gridy, gridwidth, gridheight, weightx, weighty
 				0, 0, 0, 0));		// insets top, left, bottom, right
 		// -------------------------------------------------------------------------------------------------
 		// -------------------------------------------------------------------------------------------------
@@ -459,15 +439,10 @@ public class Panel_QuickEdit_SR extends JPanel {
 		if (table6c.isEditing()) table6c.getCellEditor().cancelCellEditing();
 		if (editorTable.isEditing()) editorTable.getCellEditor().cancelCellEditing();
 		
-		// Create Search Filter (Case Insensitive)
-		String searchText = searchField.getText().trim();
-		RowFilter<Object, Object> textFilter = RowFilter.regexFilter("(?i)" + searchText, 0);
-
 		switch (btn_compact.getToolTipText()) {
 		case "switch to full view":
 			// for table 6a and 6b: loss rate mean and std
 			List<RowFilter<Object, Object>> filtersA = new ArrayList<RowFilter<Object, Object>>();
-			filtersA.add(textFilter);
 			filtersA.add(new RowFilter<Object, Object>() {
 				public boolean include(Entry entry) {
 					for (int col = 2; col < data6a[0].length; col++) {	// except the first 2 columns
@@ -480,7 +455,6 @@ public class Panel_QuickEdit_SR extends JPanel {
 			});
 			
 			List<RowFilter<Object, Object>> filtersB = new ArrayList<RowFilter<Object, Object>>();
-			filtersB.add(textFilter);
 			filtersB.add(new RowFilter<Object, Object>() {
 				public boolean include(Entry entry) {
 					for (int col = 2; col < data6b[0].length; col++) {	// except the first 2 columns
@@ -503,7 +477,6 @@ public class Panel_QuickEdit_SR extends JPanel {
 			
 			// for table 6c: conversion rate mean
 			List<RowFilter<Object, Object>> filtersC = new ArrayList<RowFilter<Object, Object>>();
-			filtersC.add(textFilter);
 			filtersC.add(new RowFilter<Object, Object>() {
 				public boolean include(Entry entry) {
 					for (int col = 2; col < data6c[0].length; col++) {	// except the first 2 columns
@@ -536,18 +509,9 @@ public class Panel_QuickEdit_SR extends JPanel {
 			}
 			break;
 		case "switch to compact view":
-			// Apply text filter even in full view
-			TableRowSorter<PrismTableModel> full_sorter_a = new TableRowSorter<>((PrismTableModel) table6a.getModel());
-			full_sorter_a.setRowFilter(textFilter);
-			table6a.setRowSorter(full_sorter_a);
-			
-			TableRowSorter<PrismTableModel> full_sorter_b = new TableRowSorter<>((PrismTableModel) table6b.getModel());
-			full_sorter_b.setRowFilter(textFilter);
-			table6b.setRowSorter(full_sorter_b);
-			
-			TableRowSorter<PrismTableModel> full_sorter_c = new TableRowSorter<>((PrismTableModel) table6c.getModel());
-			full_sorter_c.setRowFilter(textFilter);
-			table6c.setRowSorter(full_sorter_c);
+			table6a.setRowSorter(null);
+			table6b.setRowSorter(null);
+			table6c.setRowSorter(null);
 			
 			for (int i = 0; i < 2; i++) {	// first 2 columns only
 				table6c.getColumnModel().getColumn(i).setCellRenderer(render6c);

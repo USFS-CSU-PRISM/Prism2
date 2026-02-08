@@ -139,30 +139,41 @@ public class ScrollPane_SubTables_SR_Disturbances extends JScrollPane {
 		};
 
 		model.addTableModelListener(new TableModelListener() {
-			@Override
-			public void tableChanged(TableModelEvent e) {
-				if (e.getType() == TableModelEvent.UPDATE) {
-					int r = e.getFirstRow();
-					int col = e.getColumn();
-					if (r >= 0 && r < mappingIndices.size()) {
-						int masterRow = mappingIndices.get(r);
-						Object newValue = editorTable.getValueAt(r, col);
-						
-						try {
-							// 1. Update the master data array directly
-							data6c[masterRow][col] = Double.valueOf(newValue.toString());
-							
-							// 2. Trigger the selection listener in SR_Disturbances_GUI
-							// This makes the GUI call get_cr_mean_from_GUI() and save to Table6
-							if (table6c.getSelectionModel() != null) {
-								table6c.getSelectionModel().setSelectionInterval(masterRow, masterRow);
-							}
-						} catch (NumberFormatException ex) {
-							System.err.println("Invalid number format in editorTable");
-						}
-					}
-				}
-			}
+		    private boolean isReverting = false; // Flag to prevent infinite loops
+
+		    @Override
+		    public void tableChanged(TableModelEvent e) {
+		        if (isReverting || e.getType() != TableModelEvent.UPDATE) return;
+
+		        int r = e.getFirstRow();
+		        int col = e.getColumn();
+		        if (r < 0 || r >= mappingIndices.size()) return;
+
+		        Object newValue = editorTable.getValueAt(r, col);
+		        int masterRow = mappingIndices.get(r);
+
+		        try {
+		            double val = Double.parseDouble(newValue.toString());
+		            if (val < 0 || val > 100) {
+		                throw new NumberFormatException("Out of range");
+		            }
+
+		            // Success: update master data
+		            data6c[masterRow][col] = val;
+
+		            if (table6c.getSelectionModel() != null) {
+		                table6c.getSelectionModel().setSelectionInterval(masterRow, masterRow);
+		            }
+		        } catch (NumberFormatException ex) {
+		            // REVERT: Put the old value back from master data
+		            isReverting = true; 
+		            javax.swing.JOptionPane.showMessageDialog(null, "Invalid. Only double values from 0 to 100 (%) are allowed.");
+		            
+		            // This resets the text in the cell to what it was before
+		            editorTable.setValueAt(data6c[masterRow][col], r, col); 
+		            isReverting = false;
+		        }
+		    }
 		});
 		editorTable.setModel(model);
 	}
